@@ -18,4 +18,87 @@
 # - coordinator depends on all four downstream services with
 #   condition: service_healthy.
 
-services: {}
+networks:
+  backend:
+    driver: bridge
+
+services:
+
+  classifier_svc:
+    build:
+      context: ./services/classifier_svc
+    ports:
+      - "8001:8000"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  nlp_svc:
+    build:
+      context: ./services/nlp_svc
+    ports:
+      - "8002:8000"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  kg_svc:
+    build:
+      context: ./services/kg_svc
+    ports:
+      - "8003:8000"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  rag_svc:
+    build:
+      context: ./services/rag_svc
+    ports:
+      - "8004:8000"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  coordinator:
+    build:
+      context: ./coordinator
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+    depends_on:
+      classifier_svc:
+        condition: service_healthy
+      nlp_svc:
+        condition: service_healthy
+      kg_svc:
+        condition: service_healthy
+      rag_svc:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
